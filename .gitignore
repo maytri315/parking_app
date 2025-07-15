@@ -1,0 +1,29 @@
+# Python virtual environments
+venv/
+*.pyc
+__pycache__/
+
+# Node.js modules
+node_modules/
+.DS_Store
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.env
+.env.*.local
+.vscode/
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# VS Code directory (optional, but generally good to ignore)
+.vscode/
+
+# You might have a venv inside backend too, if so, add it:
+backend/venv/
