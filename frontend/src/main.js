@@ -1,65 +1,60 @@
 import { createApp } from 'vue';
-import { createRouter, createWebHistory } from 'vue-router'; // Or createWebHashHistory if you prefer that mode
-import App from './App.vue'; // Your main App component
-
-// Import all your individual components
-import Home from './components/Home.vue';
-import Contact from './components/Contact.vue';
-import About from './components/About.vue';
-import Login from './components/Login.vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import axios from 'axios';
+import App from './App.vue'; // Make sure App.vue is in src/
+import Login from './components/Login.vue'; // Make sure Login.vue is in src/components/
 import Register from './components/Register.vue';
-import AdminDashboard from './components/AdminDashboard.vue';
-import UserDashboard from './components/UserDashboard.vue';
-import AdminEditLot from './components/AdminEditLot.vue';
-import AdminViewLot from './components\AdminViewLot.vue';
-// ... import any other components you create (e.g., AdminEditUser, AdminViewSpot, etc.)
+import UserDashboard from './components/User/UserDashboard.vue';
+import AdminDashboard from './components/Admin/AdminDashboard.vue';
+import UserSummary from './components/User/UserSummary.vue';
+import UserSelectLot from './components/User/UserSelectLot.vue';
+import UserBookSpot from './components/User/UserBookSpot.vue';
+import UserReleaseSpot from './components/User/UserReleaseSpot.vue';
 
-// Define your routes
+
+// Set Axios base URL
+axios.defaults.baseURL = 'http://127.0.0.1:5000'; // Flask backend URL
+
+// Define your routes (you had this, just ensure it's here)
 const routes = [
-    { path: '/', component: Home },
-    { path: '/contact', component: Contact },
-    { path: '/about', component: About },
-    { path: '/login', component: Login },
-    { path: '/register', component: Register },
-    { path: '/admin/dashboard', component: AdminDashboard },
-    { path: '/user/dashboard', component: UserDashboard },
-    { path: '/admin/edit-lot/:id', component: AdminEditLot, props: true },
-    { path: '/admin/view-lot/:id', component: AdminViewLot, props: true },
-    // Add all other routes here, mapping paths to your imported components
-    // Example: { path: '/admin/edit-user/:id', component: AdminEditUser, props: true },
-    // Example: { path: '/admin/spot-details/:id', component: AdminSpotDetails, props: true },
-    // Example: { path: '/user/select-lot/:id', component: UserSelectLot, props: true },
-    // Example: { path: '/user/release-reservation/:id', component: UserReleaseReservation, props: true },
-    // Example: { path: '/admin/summary', component: AdminSummary },
-    // Example: { path: '/admin/occupied-spots', component: AdminOccupiedSpots },
-    // Example: { path: '/admin/search', component: AdminSearch },
-    // Example: { path: '/admin/view-delete-spot', component: AdminViewDeleteSpot },
-    // Example: { path: '/user/summary', component: UserSummary },
+    { path: '/', redirect: '/login' },
+    { path: '/login', component: Login, meta: { guest: true } },
+    { path: '/register', component: Register, meta: { guest: true } },
+    { path: '/user/dashboard', component: UserDashboard, meta: { requiresAuth: true, isUser: true } },
+    { path: '/admin/dashboard', component: AdminDashboard, meta: { requiresAuth: true, isAdmin: true } },
+    { path: '/user/summary', component: UserSummary, meta: { requiresAuth: true, isUser: true } },
+    { path: '/user/select-lot', component: UserSelectLot, meta: { requiresAuth: true, isUser: true } },
+    { path: '/user/book-spot/:lotId/:spotId', name: 'BookSpot', component: UserBookSpot, props: true, meta: { requiresAuth: true, isUser: true } },
+    { path: '/user/release-spot/:reservationId', name: 'ReleaseSpot', component: UserReleaseSpot, props: true, meta: { requiresAuth: true, isUser: true } },
+    { path: '/:pathMatch(.*)*', redirect: '/login' }
 ];
 
-// Create the router instance
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL), // Keep this or change to createWebHashHistory()
+    history: createWebHistory(),
     routes,
 });
 
-// Create the Vue app instance
-const app = createApp(App); // Mounts your root App.vue component
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('user_role');
 
-// Use the router
+    if (to.meta.requiresAuth && !token) {
+        next('/login');
+    } else if (to.meta.guest && token) {
+        if (userRole === 'admin') {
+            next('/admin/dashboard');
+        } else {
+            next('/user/dashboard');
+        }
+    } else if (to.meta.isAdmin && userRole !== 'admin') {
+        next('/user/dashboard');
+    } else if (to.meta.isUser && userRole !== 'user') {
+        next('/admin/dashboard');
+    } else {
+        next();
+    }
+});
+
+const app = createApp(App); // Here 'App' is the root App.vue component
 app.use(router);
-
-// Mount the app to the DOM element with id="app" (in public/index.html)
 app.mount('#app');
-
-// Important: If you still need a global config loaded from config.json,
-// you'll need to rethink how to load it. For now, you might hardcode it
-// or ensure it's loaded in index.html before your app starts.
-// For example:
-window.config = {
-    apiBaseUrl: 'http://localhost:5000' // Make sure this matches your Flask backend URL
-};
-
-// If you want to use axios or Chart.js globally (less common in modern Vue)
-// you'd typically import them in individual components or use plugins.
-// If you want to keep them global from CDN as before, ensure they are in index.html.
