@@ -91,7 +91,8 @@
 
 <script>
 import axios from 'axios';
-import Chart from 'chart.js/auto'; // Use 'chart.js/auto' for Chart.js 3+ for automatic registration
+import Chart from 'chart.js/auto';
+ // Use 'chart.js/auto' for Chart.js 3+ for automatic registration
 
 export default {
     name: 'UserSummary',
